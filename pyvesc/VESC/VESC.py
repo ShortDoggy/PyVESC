@@ -61,7 +61,7 @@ class VESC(object):
         """
         while not self._stop_heartbeat.isSet():
             time.sleep(0.1)
-            if self._send_alive_mgs.isSet():
+            if self._send_alive_msg.isSet():
                 self.write(alive_msg)
 
     def start_heartbeat(self):
