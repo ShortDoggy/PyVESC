@@ -30,9 +30,11 @@ class VESC(object):
 
         self.heart_beat_thread = threading.Thread(target=self._heartbeat_cmd_func)
         self._stop_heartbeat = threading.Event()
+        self._send_alive_msg = threading.Event()
 
         if start_heartbeat:
             self.start_heartbeat()
+            self.start_send_alive_msg()
 
         # check firmware version and set GetValue fields to old values if pre version 3.xx
         version = self.get_firmware_version()
@@ -59,7 +61,8 @@ class VESC(object):
         """
         while not self._stop_heartbeat.isSet():
             time.sleep(0.1)
-            self.write(alive_msg)
+            if self._send_alive_mgs.isSet():
+                self.write(alive_msg)
 
     def start_heartbeat(self):
         """
@@ -73,8 +76,17 @@ class VESC(object):
         SCOPE UNLESS WRAPPING IN A WITH STATEMENT (Assuming the heartbeat was started).
         """
         if self.heart_beat_thread.is_alive():
+            self._send_alive_msg.clear()
             self._stop_heartbeat.set()
             self.heart_beat_thread.join()
+
+    def start_send_alive_msg(self):
+        if self.heart_beat_thread.is_alive():
+            self._send_alive_msg.set()
+    
+    def stop_send_alive_msg(self):
+        if self.heart_beat_thread.is_alive():
+            self._send_alive_msg.clear()
 
     def write(self, data, num_read_bytes=None):
         """
